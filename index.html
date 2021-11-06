@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <style>
+    details {
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      padding: 0.5em 0.5em 0;
+    }
+
+    summary {
+      font-weight: bold;
+      margin: -0.5em -0.5em 0;
+      padding: 0.5em;
+    }
+
+    details[open] {
+      padding: 0.5em;
+    }
+
+    details[open] summary {
+      border-bottom: 1px solid #aaa;
+      margin-bottom: 0.5em;
+    }
+  </style>
+
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="keywords" content="" />
+    <meta name="description" content="" />
+    <title>TexTageにランダム配置を設定するやつ(Bookmarklet版)</title>
+    <link rel="icon" type="image/png" href="images/icon16.png" />
+    　
+    <link rel="apple-touch-icon" type="image/png" href="images/apple-touch-icon.png" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+  </head>
+
+  <body>
+    <header>
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-12">
+            <h1>TexTageにランダム配置を設定するやつ(Bookmarklet版)</h1>
+            <h4>
+              Chrome拡張版→
+              <a href="https://github.com/fusisan/Textage-RandomSetExtention">fusisan/Textage-RandomSetExtention</a>
+            </h4>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div>
+      <div class="container">
+        <details>
+          <summary>使い方</summary>
+          <p>1.配置入力欄に任意の配置を入力します。(公式サイトから有効期限付きで貼り付け可)</p>
+          <p>2.ブックマークレットを生成ボタンをクリックします。</p>
+          <p>3.任意のページ(このページでも可)をお気に入りに追加します。</p>
+          <p>
+            4.
+            3.で追加したお気に入りを編集しタイトルを配置情報に、URLを生成したコードに書き換えます。(それぞれ生成したボタンからコピー可)
+          </p>
+          <p>5.TexTageの譜面ページで任意の配置のブックマークレットを実行します。</p>
+        </details>
+        <br />
+      </div>
+    </div>
+
+    <div>
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-12">
+            <form>
+              <div class="form-group">
+                <label>配置入力(複数入力の場合は改行)</label>
+                <textarea class="form-control" id="bookmarklet-script" rows="5"></textarea>
+              </div>
+              <div class="form-row">
+                <button class="btn btn-primary" id="btn-generate">ブックマークレットを生成</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-12">
+          <div id="output-area"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/JavaScript">
+
+      $(function () {
+        function convert() {
+          var outputArea = $("#output-area");
+          outputArea.empty();
+          var s = $('#bookmarklet-script').val();
+          var array = s.split(/\r\n|\r|\n/g);
+          console.log(array);
+          array.forEach(element => {
+            if (checkValidPattern(element)) {
+              var btnCopyPattern = $('<a />').addClass("btn").addClass("btn-info").text(element).click(function () {
+                copy(element);
+              });
+              var btnCopyBookmarklet = $('<a />').addClass("btn").addClass("btn-success").text("コードをコピー").click(function () {
+                copy(getCode(element));
+              });
+              outputArea.append($('<hr />'));
+              outputArea.append(btnCopyPattern);
+              outputArea.append("配置をコピー");
+              outputArea.append($('<pre>' + getCode(element) + '</pre>'));
+              outputArea.append(btnCopyBookmarklet);
+            }
+          });
+        }
+
+        function getCode(pattern) {
+          var ret = 'javascript:function setRandomPattern(t){checkTextagePage()?checkValidPattern(t)?checkDP()?confirm("1P側に"+t+"を適用しますか？\\nキャンセルを押すと2P側に適用されます。")?window.location.replace(getRandomUrl(1,t)):window.location.replace(getRandomUrl(2,t)):window.location.replace(getRandomUrl(1,t)):alert("配置が正しくありません。"):alert("TexTageの譜面ページで実行して下さい。")}function checkTextagePage(){var t=window.location.href,e=new RegExp("https://textage.cc/score/.*/.*.html\\\\?[12DF].*");return null!=t.match(e)}function checkDP(){var t=window.location.href;return t.charAt(t.lastIndexOf("?")+1).match(/[DF]/)}function checkValidPattern(t){if(7!=t.length)return!1;for(var e=1;e<=7;e++)if(1!=(t.match(e,"g")||[]).length)return!1;return!0}function getRandomUrl(t,e){var n,r=window.location.href,a=r.substr(0,r.lastIndexOf("?")),c=r.substr(r.lastIndexOf("?"));return n=-1==c.indexOf("R")?1==t?c.substr(0,6)+"R0"+e+"01234567"+c.substr(6):c.substr(0,6)+"R012345670"+e+c.substr(6):1==t?c.substr(0,6)+"R0"+e+c.substr(15):c.substr(0,15)+"0"+e+c.substr(23),console.log(n),a+n}setRandomPattern("' + pattern + '");'
+          return ret;
+        }
+
+        function checkValidPattern(pattern) {
+          // 7文字丁度でなければfalse
+          if (pattern.length != 7) return false;
+          // 1-7までそれぞれ丁度1回ずつ使われていなければfalse
+          for (var i = 1; i <= 7; i++) {
+            if ((pattern.match(i, "g") || []).length != 1) return false;
+          }
+          return true;
+        }
+
+        function copy(text) {
+          navigator.clipboard.writeText(text);
+        }
+
+        $('#btn-generate').click(function () {
+        convert();
+        return false;
+        });
+        });
+    </script>
+  </body>
+</html>
